@@ -7,9 +7,7 @@ import { Error, CheckForTimeout, SendResponse } from "../utils/express/Utils";
 // TYPES
 import { Request, Response } from 'express';
 
-export default async function GetStudents(req: Request, res: Response) {
-    CheckForTimeout(res, 10000);
-    
+export default async function GetStudents(req: Request, res: Response) {    
     const { projectID } = req.query as { projectID: string };
 
     if(!projectID) {

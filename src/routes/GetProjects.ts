@@ -8,8 +8,6 @@ import { Error, CheckForTimeout, SendResponse } from "../utils/express/Utils";
 import { Request, Response } from 'express';
 
 export default async function GetProjects(req: Request, res: Response) {
-    CheckForTimeout(res, 10000);
-
     const { UID } = req.query as { UID: string };
 
     if(!UID) {
