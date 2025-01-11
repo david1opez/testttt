@@ -17,6 +17,19 @@ type FailedOrg = {
 }
 
 export default async function CreateUsers(req: Request, res: Response) {
+    const timeout = 8000;
+    let executionTime = 0;
+    let timeoutReached = false;
+
+    const interval = setInterval(() => {
+        executionTime += 100;
+
+        if (executionTime > timeout && !timeoutReached) {
+            timeoutReached = true;
+            clearInterval(interval);
+        }
+    }, 100);
+
     try {
         const organizations = await readSheet(process.env.SHEET_ID as string, "contraseñas", "A2:D");
         
@@ -97,6 +110,10 @@ export default async function CreateUsers(req: Request, res: Response) {
 
                 }
             }
+
+            if(timeoutReached) {
+                break;
+            }
         }
 
         const statusesRange = `D2:D${organizations?.length + 1}`
@@ -106,14 +123,19 @@ export default async function CreateUsers(req: Request, res: Response) {
         await updateSheet(process.env.SHEET_ID as string, "contraseñas", UIDsRange, UIDs);
 
         let statusCode = 304; // Not Modified
-
-        if(failed?.length > 0 && newUsers == 0) {
-            statusCode = 500;
-        } else if(newUsers > 0) {
-            if(failed.length > 0) {
-                statusCode = 206; // Partial Content
-            } else {
-                statusCode = 201;
+        
+        if(timeoutReached) {
+            statusCode = 408;
+        }
+        else {
+            if(failed?.length > 0 && newUsers == 0) {
+                statusCode = 500;
+            } else if(newUsers > 0) {
+                if(failed.length > 0) {
+                    statusCode = 206; // Partial Content
+                } else {
+                    statusCode = 201;
+                }
             }
         }
 
