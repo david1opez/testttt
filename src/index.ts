@@ -22,7 +22,6 @@ router.post('/loadDatabase', Routes.LoadDatabase);
 // MIDDLEWARE
 app.use(cors());
 app.use(bodyParser.json({ limit: '1mb' }));
-app.use(TimeoutMiddleware(60000));
 app.use('/', router);
 
 // INITIALIZE SERVER
