@@ -2,7 +2,7 @@ import { doc, getDoc } from "firebase/firestore";
 
 // HELPER FUNCTIONS
 import { db } from "../utils/firebase/config";
-import { Error, CheckForTimeout, SendResponse } from "../utils/express/Utils";
+import { Error, SendResponse } from "../utils/express/Utils";
 
 // TYPES
 import { Request, Response } from 'express';
@@ -32,7 +32,8 @@ export default async function GetStudents(req: Request, res: Response) {
         }
 
         const studentIds = Object.keys(students).sort();
-        const studentsArray = studentIds?.map(matricula => ([matricula, ...students[matricula]]));
+
+        const studentsArray = studentIds?.map(matricula => students[matricula]);
 
         if(studentsArray.length === 0) {
             Error(res, 404, `No students found in database for organization: ${projectID}`);
