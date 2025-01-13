@@ -1,4 +1,4 @@
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, writeBatch } from 'firebase/firestore';
 
 // HELPER FUNCTIONS
 import { db } from '../utils/firebase/config';
@@ -61,19 +61,47 @@ export default async function LoadDatabase(req: Request, res: Response) {
             }
         });
 
-        await Promise.all(Object.values(projects).map(async (project) => {
+        const projectValues = Object.values(projects);
+
+        const batch = writeBatch(db);
+
+        projectValues.map(async (project) => {
             const orgUID = (organizationUIDs.find((organization) => organization[1] === project["organizacion"]) || [undefined])[0];
 
             if(orgUID) {
                 const orgRef = doc(db, "proyectos", orgUID);
-
-                await setDoc(orgRef, project);
+                batch.set(orgRef, project);
             }
-        }));
+        });
+
+        let students: {[key: string]: {[key: string]: { data: string[], row: number }}} = {};
+        let projectIds = new Set<string>();
+
+        studentsData.forEach((student, index) => {
+            const [org, project] = student.splice(7);
+            const projectID = GenerateID(`${org}${project}`);
+
+            projectIds.add(projectID);
+
+            if(!students[projectID]) {
+                students[projectID] = {};
+            }
+
+            students[projectID][student[0]] = {
+                data: student,
+                row: index + 6
+            };
+        });
+
+        Array.from(projectIds).map(async (projectID) => {
+            const projectRef = doc(db, "alumnos", projectID);
+            batch.set(projectRef, students[projectID]);
+        });
+
+        await batch.commit();
 
         SendResponse(res, 200, {
-            students: studentsData,
-            projects: projects,
+            message: `${projectsArray.length} projects and ${studentsData.length} students loaded successfully`
         });
     }
 }
